@@ -1,7 +1,9 @@
 import { Color } from "./Color";
 import { Galaxy } from "./Galaxies";
 import { Government } from "./Government";
+import { PlanetDetails } from "./Planet";
 import { StarSystem, SystemLink } from "./StarSystem";
+import { WormholeDetails } from "./Wormhole";
 
 export class ParsedData {
     galaxies: Map<string, Galaxy> = new Map();
@@ -9,6 +11,8 @@ export class ParsedData {
     colors: Map<string, Color> = new Map();
     sprites: Map<string, File> = new Map();
     governments: Map<string, Government> = new Map();
+    planets: Map<string, PlanetDetails> = new Map();
+    wormholes: Map<string, WormholeDetails> = new Map();
     starSystemsLinks: Set<string> = new Set();
 
     constructor() {}
@@ -40,5 +44,13 @@ export class ParsedData {
 
     addGovernment(gov: Government) {
         this.governments.set(gov.name, gov);
+    }
+
+    addPlanet(planet: PlanetDetails) {
+        this.planets.set(planet.name, planet);
+    }
+
+    addWormhole(wormhole: WormholeDetails) {
+        this.wormholes.set(wormhole.name, wormhole);
     }
 }

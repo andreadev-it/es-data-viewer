@@ -39,10 +39,7 @@ export class Galaxy {
         }
 
         const galaxy = new Galaxy(data, name, pos);
-
-        if (sprite != "") {
-            galaxy.sprite = sprite;
-        }
+        galaxy.sprite = sprite;
 
         return galaxy;
     }

@@ -3,6 +3,7 @@ import { PanZoomPlugin } from "@andreadev/canvas-lib/dist/modules/pan-zoom-plugi
 import { Drawable, Point, BoundingClientRect } from "@andreadev/canvas-lib/dist/modules/drawables";
 import { ParsedData } from "./ParsedData";
 import { Color } from "./Color";
+import { SystemObject } from "./Object";
 
 export type SystemLink = [Point, Point];
 
@@ -14,6 +15,8 @@ export class StarSystem implements Drawable {
     links: string[] = [];
     government: string = "";
     esData: ParsedData;
+    attributes: string[] = [];
+    objects: SystemObject[] = [];
 
     static fromLine(data: ParsedData, dataLine: Line) {
         if (dataLine.tokens[0] != 'system') {
@@ -25,22 +28,33 @@ export class StarSystem implements Drawable {
         let foundPos = false;
         let links: string[] = [];
         let government = "";
+        let attributes: string[] = [];
+        const objects: SystemObject[] = [];
         for (let child of dataLine.children) {
-            if (child.tokens[0] == 'pos') {
-                pos = {
-                    x: parseInt(child.tokens[1]),
-                    y: parseInt(child.tokens[2])
-                };
-                foundPos = true;
-                continue;
-            }
-            
-            if (child.tokens[0] == 'link') {
-                links.push(child.tokens[1]);
-            }
-
-            if (child.tokens[0] == 'government') {
-                government = child.tokens[1];
+            switch (child.tokens[0]) {
+                // Extract the position
+                case 'pos':
+                    pos = {
+                        x: parseInt(child.tokens[1]),
+                        y: parseInt(child.tokens[2])
+                    };
+                    foundPos = true;
+                    break;
+                // Extract the links
+                case 'link':
+                    links.push(child.tokens[1]);
+                    break;
+                // Set the system government
+                case 'government':
+                    government = child.tokens[1];
+                    break;
+                // Save a list of attributes
+                case 'attributes':
+                    attributes = child.tokens.slice(1);
+                    break;
+                // Parse the objects in the system
+                case 'object':
+                    objects.push(SystemObject.fromLine(data, child));
             }
         }
 
@@ -51,6 +65,8 @@ export class StarSystem implements Drawable {
         const system = new StarSystem(data, name, pos);
         system.links = links;
         system.government = government;
+        system.attributes = attributes;
+        system.objects = objects;
         
         starSystemsMap.set(name, system);
 

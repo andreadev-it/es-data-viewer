@@ -5,6 +5,8 @@ import { FileRoot } from "es-data-parser/dist/structures";
 import { parseFile } from "es-data-parser";
 import { Color } from "../es-data/Color";
 import { Government } from "../es-data/Government";
+import { PlanetDetails } from "../es-data/Planet";
+import { WormholeDetails } from "../es-data/Wormhole";
 
 
 export async function parse(files: File[]) {
@@ -32,6 +34,12 @@ export async function parse(files: File[]) {
                 }
                 else if (child.tokens[0] == 'government') {
                     parsedData.addGovernment(Government.fromLine(parsedData, child));
+                }
+                else if (child.tokens[0] == 'planet') {
+                    parsedData.addPlanet(PlanetDetails.fromLine(parsedData, child));
+                }
+                else if (child.tokens[0] == 'wormhole') {
+                    parsedData.addWormhole(WormholeDetails.fromLine(parsedData, child));
                 }
             }
         }

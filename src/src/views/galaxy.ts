@@ -10,6 +10,8 @@ export class GalaxyView extends EventTarget implements View {
     shouldRenderLinks = true;
     shouldRenderDots  = true;
     shouldRenderGalaxies = true;
+    shouldRenderWormholeLinks = true;
+    shouldRenderHiddenWormholes = true;
 
     constructor(private esData: ParsedData, private canvasLib: CanvasLib) { super(); }
 
@@ -18,6 +20,8 @@ export class GalaxyView extends EventTarget implements View {
         document.getElementById('toggle-pins')?.addEventListener('change', this.toggleDots.bind(this))
         document.getElementById('toggle-names')?.addEventListener('change', this.toggleNames.bind(this))
         document.getElementById('toggle-links')?.addEventListener('change', this.toggleLinks.bind(this))
+        document.getElementById('toggle-wormholes')?.addEventListener('change', this.toggleWormholes.bind(this))
+        document.getElementById('toggle-hidden-wormholes')?.addEventListener('change', this.toggleHiddenWormholes.bind(this))
     }
 
     deactivate() {
@@ -42,6 +46,14 @@ export class GalaxyView extends EventTarget implements View {
     }
     toggleGalaxies(e: Event) {
         this.shouldRenderGalaxies = (<HTMLInputElement>e.target).checked; 
+        this.canvasLib.paint();
+    }
+    toggleWormholes(e: Event) {
+        this.shouldRenderWormholeLinks = (<HTMLInputElement>e.target).checked; 
+        this.canvasLib.paint();
+    }
+    toggleHiddenWormholes(e: Event) {
+        this.shouldRenderHiddenWormholes = (<HTMLInputElement>e.target).checked; 
         this.canvasLib.paint();
     }
 
@@ -73,6 +85,31 @@ export class GalaxyView extends EventTarget implements View {
 
                 ctx.lineTo(target.position.x, target.position.y);
                 ctx.stroke();
+            }
+        }
+
+        if (this.shouldRenderWormholeLinks) {
+            // Draw all links
+            ctx.lineWidth = PanZoomPlugin.fixedNumber(1, ctx);
+            ctx.strokeStyle = 'rgba(100,100,255,0.5)';
+            for (let wormhole of this.esData.wormholes.values()) {
+                if (!wormhole.isMappable && !this.shouldRenderHiddenWormholes) continue;
+
+                for (let link of wormhole.links) {
+                    let [originName, targetName] = link;
+
+                    let origin = this.esData.starSystems.get(originName);
+                    let target = this.esData.starSystems.get(targetName);
+
+                    if (!target || !origin)
+                        continue;
+
+                    ctx.beginPath();
+                    ctx.moveTo(origin.position.x, origin.position.y);
+
+                    ctx.lineTo(target.position.x, target.position.y);
+                    ctx.stroke();
+                }
             }
         }
     }
