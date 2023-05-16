@@ -1,0 +1,47 @@
+:root {
+    --ui-bg: #1a1a1a;
+    --ui-fg: #888;
+    --ui-bg-lighter: #333;
+    --ui-border: #555;
+    font-family: 'Roboto', sans-serif;
+}
+
+.container {
+    background-color: var(--ui-bg);
+    border: solid 1px var(--ui-border);
+    color: var(--ui-fg);
+}
+
+.container .title {
+    border-bottom: solid 1px var(--ui-border);
+    background-color: var(--ui-bg-lighter);
+    margin-bottom: 8px;
+    text-align: center;
+    padding: 6px;
+}
+
+.container .body {
+    padding: 8px;
+}
+
+.vertical-stack {
+    display: flex;
+    flex-direction: column;
+}
+
+.container .field {
+    padding: 4px;
+}
+
+.btn {
+    background-color: var(--ui-bg);
+    border: solid 1px var(--ui-border);
+    color: #fff;
+    padding: 6px 8px;
+    box-shadow: 0px 0px 5px #000;
+    cursor: pointer;
+}
+
+.btn:hover {
+    background-color: var(--ui-bg-lighter);
+}

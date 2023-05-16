@@ -1,0 +1,20 @@
+{
+  "name": "galaxy-viewer",
+  "version": "1.0.0",
+  "description": "A typescript and canvas based viewer for endless sky star systems",
+  "scripts": {
+    "start": "parcel src/index.html",
+    "build": "parcel build src/index.html",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Andrea Dragotta",
+  "license": "ISC",
+  "devDependencies": {
+    "parcel": "^2.8.3"
+  },
+  "dependencies": {
+    "@andreadev/canvas-lib": "file:../canvas-lib",
+    "@types/wicg-file-system-access": "^2020.9.6",
+    "es-data-parser": "file:../data-parser"
+  }
+}
