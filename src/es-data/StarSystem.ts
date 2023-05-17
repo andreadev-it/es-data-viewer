@@ -17,6 +17,7 @@ export class StarSystem implements Drawable {
     esData: ParsedData;
     attributes: string[] = [];
     objects: SystemObject[] = [];
+    isSelected = false;
 
     static fromLine(data: ParsedData, dataLine: Line) {
         if (dataLine.tokens[0] != 'system') {
@@ -92,10 +93,39 @@ export class StarSystem implements Drawable {
         };
     }
 
+    distanceFrom(point: Point): number {
+        let distance = Math.sqrt(
+            Math.pow(this.position.x - point.x, 2) +
+            Math.pow(this.position.y - point.y, 2)
+        );
+
+        return distance;
+    }
+
     render(ctx: CanvasRenderingContext2D) {
+        this.renderSelection(ctx);
         this.renderLinks(ctx);
         this.renderDot(ctx);
         this.renderName(ctx);
+    }
+
+    renderSelection(ctx: CanvasRenderingContext2D) {
+        if (!this.isSelected) return;
+
+        ctx.beginPath();
+        ctx.fillStyle = 'rgba(100,100,255,0.2)';
+        ctx.strokeStyle = 'darkblue';
+        ctx.lineWidth = PanZoomPlugin.fixedNumber(1, ctx);
+        let width = PanZoomPlugin.fixedNumber(15, ctx);
+        ctx.ellipse(
+            this.position.x,
+            this.position.y,
+            width,
+            width,
+            0, 0, 2 * Math.PI
+        );
+        ctx.fill();
+        ctx.stroke();
     }
 
     renderLinks(ctx: CanvasRenderingContext2D) {

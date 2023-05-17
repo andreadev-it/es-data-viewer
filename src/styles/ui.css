@@ -12,6 +12,22 @@
     color: var(--ui-fg);
 }
 
+.top-bar .container {
+    border-top: solid 0px;
+}
+
+.bottom-bar .container {
+    border-bottom: solid 0px;
+}
+
+.right-bar .container {
+    border-right: solid 0px;
+}
+
+.left-bar .container {
+    border-left: solid 0px;
+}
+
 .container .title {
     border-bottom: solid 1px var(--ui-border);
     background-color: var(--ui-bg-lighter);

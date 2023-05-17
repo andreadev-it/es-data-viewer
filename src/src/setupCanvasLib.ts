@@ -29,6 +29,7 @@ export function initCanvasLib(canvas: HTMLCanvasElement) {
     const postRender = async (event: RenderingEvent) => {
         currentView?.render(event.detail.context);
     }
+
     canvasLib.on('prerender', preRender);
     canvasLib.on('render', render);
     canvasLib.on('postrender', postRender);

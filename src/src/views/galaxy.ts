@@ -2,6 +2,7 @@ import { ParsedData } from "../../es-data/ParsedData";
 import { PanZoomPlugin } from "@andreadev/canvas-lib/dist/modules/pan-zoom-plugin";
 import { View } from "./abstract";
 import { CanvasLib } from "@andreadev/canvas-lib";
+import { StarSystem } from "../../es-data/StarSystem";
 
 
 export class GalaxyView extends EventTarget implements View {
@@ -11,9 +12,14 @@ export class GalaxyView extends EventTarget implements View {
     shouldRenderDots  = true;
     shouldRenderGalaxies = true;
     shouldRenderWormholeLinks = true;
-    shouldRenderHiddenWormholes = true;
+    shouldRenderHiddenWormholes = false;
+    currentlySelected: StarSystem | null = null;
 
-    constructor(private esData: ParsedData, private canvasLib: CanvasLib) { super(); }
+    constructor(private esData: ParsedData, private canvasLib: CanvasLib) { 
+        super();
+
+        this.canvasLib.canvas.addEventListener('pointerdown', this.onCanvasClick.bind(this));
+    }
 
     activate() {
         document.getElementById('toggle-galaxies')?.addEventListener('change', this.toggleGalaxies.bind(this))
@@ -55,6 +61,68 @@ export class GalaxyView extends EventTarget implements View {
     toggleHiddenWormholes(e: Event) {
         this.shouldRenderHiddenWormholes = (<HTMLInputElement>e.target).checked; 
         this.canvasLib.paint();
+    }
+
+    onCanvasClick(e: PointerEvent) {
+        if (e.button !== 0) return;
+
+        let panZoomPlugin = this.canvasLib.getPlugin(PanZoomPlugin);
+        if (!panZoomPlugin) return;
+
+        let point = panZoomPlugin.screenToLocalPoint(e.clientX, e.clientY);
+
+        let closest: StarSystem | null = null;
+        let closestDistance = 10000; // High number
+        let minimumDistance = 10;
+        let ctx = this.canvasLib.canvas.getContext('2d');
+        if (ctx) {
+            minimumDistance = PanZoomPlugin.fixedNumber(10, ctx);
+        }
+
+        for (let system of this.esData.starSystems.values()) {
+            let d = system.distanceFrom(point);
+            if (d > minimumDistance) continue;
+
+            if (!closest || d < closestDistance) {
+                closest = system;
+                closestDistance = d;
+            }
+        }
+
+        if (!closest) {
+            this.removeSelection();
+            return;
+        }
+
+        this.selectSystem(closest);
+    }
+
+    removeSelection() {
+        if (!this.currentlySelected) return;
+
+        this.currentlySelected.isSelected = false;
+        this.currentlySelected = null;
+
+        this.canvasLib.paint();
+    }
+
+    selectSystem(system: StarSystem) {
+
+        if (this.currentlySelected)
+            this.currentlySelected.isSelected = false;
+
+        this.currentlySelected = system;
+        system.isSelected = true;
+        this.updateStarSystemInfo(system);
+        
+        this.canvasLib.paint();
+    }
+
+    updateStarSystemInfo(system: StarSystem) {
+        document.querySelector('#system-name .value')!.textContent = system.name;
+        document.querySelector('#system-position .value')!.textContent = `${system.position.x} - ${system.position.y}`;
+        document.querySelector('#system-government .value')!.textContent = system.government;
+        document.querySelector('#system-attributes .value')!.textContent = system.attributes.join(', ');
     }
 
     preRender(ctx: CanvasRenderingContext2D) {
@@ -119,6 +187,8 @@ export class GalaxyView extends EventTarget implements View {
 
         // Draw all systems
         for (let system of this.esData.starSystems.values()) {
+            system.renderSelection(ctx);
+
             if (this.shouldRenderDots) {
                 system.renderDot(ctx);
             }
