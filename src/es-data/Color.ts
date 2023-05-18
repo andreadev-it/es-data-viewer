@@ -1,4 +1,4 @@
-import { Line } from "es-data-parser/dist/structures";
+import { Line } from "es-data-parser/structures";
 import { ParsedData } from "./ParsedData";
 
 export class Color {

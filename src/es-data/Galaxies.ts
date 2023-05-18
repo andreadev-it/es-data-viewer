@@ -1,4 +1,4 @@
-import { Line } from "es-data-parser/dist/structures";
+import { Line } from "es-data-parser/structures";
 import { ParsedData } from "./ParsedData";
 import { Point } from "@andreadev/canvas-lib/dist/modules/drawables";
 

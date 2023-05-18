@@ -1,4 +1,4 @@
-import { Line } from "es-data-parser/dist/structures";
+import { Line } from "es-data-parser/structures";
 import { PanZoomPlugin } from "@andreadev/canvas-lib/dist/modules/pan-zoom-plugin";
 import { Drawable, Point, BoundingClientRect } from "@andreadev/canvas-lib/dist/modules/drawables";
 import { ParsedData } from "./ParsedData";

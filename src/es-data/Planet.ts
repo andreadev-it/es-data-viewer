@@ -1,5 +1,5 @@
 import { ParsedData } from "./ParsedData";
-import { Line } from "es-data-parser/dist/structures";
+import { Line } from "es-data-parser/structures";
 import { WormholeDetails } from "./Wormhole";
 
 export class PlanetDetails {

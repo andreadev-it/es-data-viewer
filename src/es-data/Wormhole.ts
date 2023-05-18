@@ -1,6 +1,6 @@
 import { Color } from "./Color";
 import { ParsedData } from "./ParsedData";
-import { Line } from "es-data-parser/dist/structures";
+import { Line } from "es-data-parser/structures";
 
 export class WormholeDetails {
     isMappable = false;
