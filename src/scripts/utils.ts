@@ -42,3 +42,16 @@ export const throttle = (fn: Function, wait: number = 300) => {
     };
 };
 
+// Load image
+export function loadImage(file: File): Promise<HTMLImageElement> {
+    return new Promise((resolve, reject) => {
+        let img = new Image();
+        img.onload = () => {
+            resolve(img);
+        }
+        img.onerror = () => {
+            reject();
+        }
+        img.src = URL.createObjectURL(file);
+    });
+}

@@ -1,9 +1,10 @@
 import { CanvasLib } from "@andreadev/canvas-lib";
 import { PanZoomPlugin } from "@andreadev/canvas-lib/dist/modules/pan-zoom-plugin";
-import { ParsedData } from "../es-data/ParsedData";
 import { View } from "./views/abstract";
 import { GalaxyView } from "./views/galaxy";
 import { RenderingEvent } from "@andreadev/canvas-lib/dist/main";
+import { ParsedData } from "es-data-parser";
+import { SpriteList } from "./game-functions/sprites";
 
 const views: Record<string, View | null>= {
     galaxy: null
@@ -37,15 +38,15 @@ export function initCanvasLib(canvas: HTMLCanvasElement) {
     return canvasLib;
 }
 
-export function setCurrentView(view: View) {
-    currentView?.deactivate();
+export async function setCurrentView(view: View) {
+    await currentView?.deactivate();
     currentView = view;
-    currentView.activate();
+    await currentView.activate();
 }
 
-export function filesLoaded(lib: CanvasLib, data: ParsedData) {
-    views.galaxy = new GalaxyView(data, lib);
-    setCurrentView(views.galaxy);
+export async function filesLoaded(lib: CanvasLib, sprites: SpriteList, data: ParsedData) {
+    views.galaxy = new GalaxyView(data, sprites, lib);
+    await setCurrentView(views.galaxy);
 
     lib.paint();
 }

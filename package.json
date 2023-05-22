@@ -10,6 +10,7 @@
   "author": "Andrea Dragotta",
   "license": "ISC",
   "devDependencies": {
+    "@kkirbatski/parcel-resolver-require-resolve": "^1.0.4",
     "parcel": "^2.8.3"
   },
   "dependencies": {
