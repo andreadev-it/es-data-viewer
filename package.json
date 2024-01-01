@@ -14,7 +14,9 @@
     "parcel": "^2.8.3"
   },
   "dependencies": {
-    "@andreadev/canvas-lib": "^1.0.2",
-    "es-data-parser": "^1.0.0"
+    "@andreadev/canvas-lib": "^2.0.0",
+    "@andreadev/custom-event-target": "^1.0.1",
+    "es-data-parser": "^1.0.0",
+    "simple-event-system": "file:../custom-event-target"
   }
 }

@@ -7,6 +7,7 @@ import { distanceFromSystem } from "../game-functions/system";
 import { renderSystemSelection, renderSystemPin, renderSystemLinks, renderSystemName } from "../game-functions/system";
 import { renderGalaxy } from "../game-functions/galaxy";
 import { SpriteList } from "../game-functions/sprites";
+import { RenderingProp } from "@andreadev/canvas-lib/dist/main";
 
 
 export class GalaxyView extends EventTarget implements View {
@@ -23,10 +24,11 @@ export class GalaxyView extends EventTarget implements View {
     constructor(private esData: ParsedData, private spriteList: SpriteList, private canvasLib: CanvasLib) { 
         super();
 
+        this.esData = esData;
         this.canvasLib.canvas.addEventListener('pointerdown', this.onCanvasClick.bind(this));
     }
 
-    async activate() {
+    async activate(lib: CanvasLib) {
         document.getElementById('toggle-galaxies')?.addEventListener('change', this.toggleGalaxies.bind(this))
         document.getElementById('toggle-pins')?.addEventListener('change', this.toggleDots.bind(this))
         document.getElementById('toggle-names')?.addEventListener('change', this.toggleNames.bind(this))
@@ -37,14 +39,28 @@ export class GalaxyView extends EventTarget implements View {
         this.buildSystemLinksCache();
 
         await this.preloadGalaxySprites();
+
+        lib.addLayer('galaxies', 0);
+        lib.addLayer('links', 1);
+        lib.addLayer('wormhole-links', 2);
+        lib.addLayer('systems', 3);
+
+        lib.on('galaxies', this.renderGalaxies.bind(this));
+        lib.on('links', this.renderLinks.bind(this));
+        lib.on('wormhole-links', this.renderWormholeLinks.bind(this));
+        lib.on('systems', this.renderSystems.bind(this));
     }
 
-    async deactivate() {
+    async deactivate(lib: CanvasLib) {
         // Removing event listeners will not work because of "bind"
         // document.getElementById('toggle-galaxies')?.removeEventListener('change', this.toggleGalaxies)
         // document.getElementById('toggle-pins')?.addEventListener('change', this.toggleDots)
         // document.getElementById('toggle-names')?.addEventListener('change', this.toggleNames)
         // document.getElementById('toggle-links')?.addEventListener('change', this.toggleLinks)
+        lib.removeLayer('galaxies');
+        lib.removeLayer('links');
+        lib.removeLayer('wormhole-links');
+        lib.removeLayer('systems');
     }
 
     toggleNames(e: Event) {
@@ -152,22 +168,51 @@ export class GalaxyView extends EventTarget implements View {
         }
     }
 
-    async preRender(ctx: CanvasRenderingContext2D) {
+    async renderGalaxies({ context }: RenderingProp) {
         if (!this.esData) return;
 
         // Draw all galaxies
         if (this.shouldRenderGalaxies) {
             for (let galaxy of this.esData.galaxies.values()) {
-                await renderGalaxy(galaxy, this.spriteList, ctx);
+                await renderGalaxy(galaxy, this.spriteList, context);
             }
         }
+    }
 
-        if (this.shouldRenderLinks) {
-            // Draw all links
-            ctx.lineWidth = PanZoomPlugin.fixedNumber(1, ctx);
-            ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-            for (let link of this.systemLinksCache.values()) {
-                let [originName, targetName] = link.split('___');
+    async renderLinks({ context }: RenderingProp) {
+        if (!this.esData || !this.shouldRenderLinks) return;
+
+        // Draw all links
+        context.lineWidth = PanZoomPlugin.fixedNumber(1, context);
+        context.strokeStyle = 'rgba(255,255,255,0.2)';
+        for (let link of this.systemLinksCache.values()) {
+            let [originName, targetName] = link.split('___');
+
+            let origin = this.esData.starSystems.get(originName);
+            let target = this.esData.starSystems.get(targetName);
+
+            if (!target || !origin)
+                continue;
+
+            context.beginPath();
+            context.moveTo(origin.position.x, origin.position.y);
+
+            context.lineTo(target.position.x, target.position.y);
+            context.stroke();
+        }
+    }
+
+    async renderWormholeLinks({ context }: RenderingProp) {
+        if (!this.esData || !this.shouldRenderWormholeLinks) return;
+
+        // Draw all links
+        context.lineWidth = PanZoomPlugin.fixedNumber(1, context);
+        context.strokeStyle = 'rgba(100,100,255,0.5)';
+        for (let wormhole of this.esData.wormholes.values()) {
+            if (!wormhole.isMappable && !this.shouldRenderHiddenWormholes) continue;
+
+            for (let link of wormhole.links) {
+                let [originName, targetName] = link;
 
                 let origin = this.esData.starSystems.get(originName);
                 let target = this.esData.starSystems.get(targetName);
@@ -175,63 +220,30 @@ export class GalaxyView extends EventTarget implements View {
                 if (!target || !origin)
                     continue;
 
-                ctx.beginPath();
-                ctx.moveTo(origin.position.x, origin.position.y);
+                context.beginPath();
+                context.moveTo(origin.position.x, origin.position.y);
 
-                ctx.lineTo(target.position.x, target.position.y);
-                ctx.stroke();
-            }
-        }
-
-        if (this.shouldRenderWormholeLinks) {
-            // Draw all links
-            ctx.lineWidth = PanZoomPlugin.fixedNumber(1, ctx);
-            ctx.strokeStyle = 'rgba(100,100,255,0.5)';
-            for (let wormhole of this.esData.wormholes.values()) {
-                if (!wormhole.isMappable && !this.shouldRenderHiddenWormholes) continue;
-
-                for (let link of wormhole.links) {
-                    let [originName, targetName] = link;
-
-                    let origin = this.esData.starSystems.get(originName);
-                    let target = this.esData.starSystems.get(targetName);
-
-                    if (!target || !origin)
-                        continue;
-
-                    ctx.beginPath();
-                    ctx.moveTo(origin.position.x, origin.position.y);
-
-                    ctx.lineTo(target.position.x, target.position.y);
-                    ctx.stroke();
-                }
+                context.lineTo(target.position.x, target.position.y);
+                context.stroke();
             }
         }
     }
 
-    render(ctx: CanvasRenderingContext2D) {
+    async renderSystems({ context }: RenderingProp) {
         if (!this.esData) return;
 
         // Draw all systems
         for (let system of this.esData.starSystems.values()) {
             if (this.currentlySelected == system)
-                renderSystemSelection(system, ctx);
-
-            // if (this.shouldRenderLinks) {
-            //     renderSystemLinks(system, ctx);
-            // }
+                renderSystemSelection(system, context);
 
             if (this.shouldRenderDots) {
-                renderSystemPin(system, ctx);
+                renderSystemPin(system, context);
             }
 
             if (this.shouldRenderNames) {
-                renderSystemName(system, ctx);
+                renderSystemName(system, context);
             }
         }
-    }
-
-    postRender(ctx: CanvasRenderingContext2D) {
-
     }
 }
