@@ -1,8 +1,9 @@
 import { CanvasLib } from "@andreadev/canvas-lib";
 import { PanZoomPlugin } from "@andreadev/canvas-lib/dist/modules/pan-zoom-plugin";
+import { ParsedData } from "es-data-parser";
+import { setCurrentView } from "./setupCanvasLib";
 
-
-export function bindUI(lib: CanvasLib) {
+export function bindUI(lib: CanvasLib, data: ParsedData) {
     // Setup event listeners for the UI
     document.getElementById('zoom-in')?.addEventListener('click', () => {
         const panZoomPlugin = lib.getPlugin(PanZoomPlugin);
@@ -20,11 +21,19 @@ export function bindUI(lib: CanvasLib) {
         panZoomPlugin.zoom(-0.2);
     });
 
-    document.getElementById('viewer')?.addEventListener('pointerdown', (e) => {
-        const panZoomPlugin = lib.getPlugin(PanZoomPlugin);
+    let systemSelect = document.getElementById('system-selection')!;
+    for (let systemName of data.starSystems.keys()) {
+        let opt = document.createElement('option');
+        opt.value = systemName;
+        opt.innerText = systemName;
+        systemSelect.appendChild(opt);
+    }
 
-        if (!panZoomPlugin) return;
+    document.getElementById('galaxy-tab')?.addEventListener('click', () => {
+        setCurrentView(lib, 'galaxy');
+    });
 
-        console.log(panZoomPlugin.screenToLocalPoint(e.clientX, e.clientY));
-    })
+    document.getElementById('system-tab')?.addEventListener('click', () => {
+        setCurrentView(lib, 'system');
+    });
 }

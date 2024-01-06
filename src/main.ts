@@ -21,7 +21,7 @@ async function initApp() {
     
     filesLoaded(lib, sprites, data);
 
-    bindUI(lib);
+    bindUI(lib, data);
 };
 
 function extractSprites(files: File[]) {

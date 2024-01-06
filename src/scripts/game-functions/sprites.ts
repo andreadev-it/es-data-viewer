@@ -12,3 +12,27 @@ export class SpriteList {
         return img;
     }
 }
+
+export function printSprite(filename: string, image: HTMLImageElement, scale: number, ctx: CanvasRenderingContext2D) {
+    let [name, _] = filename.split('.');
+
+    // additive -> lighter
+    switch (name.at(-1)) {
+        case '+':
+        case '~':
+            ctx.globalCompositeOperation = 'lighter';
+    }
+
+    let printWidth = image.width * scale;
+    let printHeight = image.height * scale;
+
+    ctx.drawImage(
+        image,
+        - (printWidth/2),
+        - (printHeight/2),
+        printWidth,
+        printHeight
+    );
+    
+    ctx.globalCompositeOperation = 'source-over';
+}

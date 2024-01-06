@@ -20,6 +20,8 @@ export class GalaxyView extends EventTarget implements View {
     shouldRenderHiddenWormholes = false;
     currentlySelected: System | null = null;
     systemLinksCache: Set<string> = new Set();
+    savedZoom: number = 1;
+    savedPosition = {x: 0, y: 0};
 
     constructor(private esData: ParsedData, private spriteList: SpriteList, private canvasLib: CanvasLib) { 
         super();
@@ -49,6 +51,11 @@ export class GalaxyView extends EventTarget implements View {
         lib.on('links', this.renderLinks.bind(this));
         lib.on('wormhole-links', this.renderWormholeLinks.bind(this));
         lib.on('systems', this.renderSystems.bind(this));
+
+        // Reset lib zoom and position as when the view was left
+        let panZoomPlug = lib.getPlugin(PanZoomPlugin)!;
+        panZoomPlug.currentZoom = this.savedZoom;
+        panZoomPlug.cameraOffset = this.savedPosition;
     }
 
     async deactivate(lib: CanvasLib) {
@@ -61,6 +68,10 @@ export class GalaxyView extends EventTarget implements View {
         lib.removeLayer('links');
         lib.removeLayer('wormhole-links');
         lib.removeLayer('systems');
+
+        let panZoomPlug = lib.getPlugin(PanZoomPlugin)!;
+        this.savedZoom = panZoomPlug.currentZoom;
+        this.savedPosition = panZoomPlug.cameraOffset;
     }
 
     toggleNames(e: Event) {
@@ -134,13 +145,16 @@ export class GalaxyView extends EventTarget implements View {
     selectSystem(system: System) {
         this.currentlySelected = system;
         this.updateStarSystemInfo(system);
+
+        let systemList = <HTMLSelectElement> document.getElementById('system-selection');
+        systemList.value = system.name;
         
         this.canvasLib.paint();
     }
 
     updateStarSystemInfo(system: System) {
         document.querySelector('#system-name .value')!.textContent = system.name;
-        document.querySelector('#system-position .value')!.textContent = `${system.position.x} - ${system.position.y}`;
+        document.querySelector('#system-position .value')!.textContent = `${system.position.x}, ${system.position.y}`;
         document.querySelector('#system-government .value')!.textContent = system.government;
         document.querySelector('#system-attributes .value')!.textContent = system.attributes.join(', ');
     }

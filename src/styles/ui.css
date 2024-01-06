@@ -6,6 +6,19 @@
     font-family: 'Roboto', sans-serif;
 }
 
+.view-galaxy,
+.view-system {
+    display: none;
+}
+
+.active-galaxy .view-galaxy {
+    display: revert;
+}
+
+.active-system .view-system {
+    display: revert;
+}
+
 .container {
     background-color: var(--ui-bg);
     border: solid 1px var(--ui-border);
