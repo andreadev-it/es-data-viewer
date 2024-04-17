@@ -21,14 +21,6 @@ export function bindUI(lib: CanvasLib, data: ParsedData) {
         panZoomPlugin.zoom(-0.2);
     });
 
-    let systemSelect = document.getElementById('system-selection')!;
-    for (let systemName of data.starSystems.keys()) {
-        let opt = document.createElement('option');
-        opt.value = systemName;
-        opt.innerText = systemName;
-        systemSelect.appendChild(opt);
-    }
-
     document.getElementById('galaxy-tab')?.addEventListener('click', () => {
         setCurrentView(lib, 'galaxy');
     });

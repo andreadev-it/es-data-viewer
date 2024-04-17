@@ -1,4 +1,4 @@
-import { ParsedData, SystemObject } from "es-data-parser";
+import { ParsedData } from "es-data-parser";
 import { PanZoomPlugin } from "@andreadev/canvas-lib/dist/modules/pan-zoom-plugin";
 import { View } from "./abstract";
 import { CanvasLib } from "@andreadev/canvas-lib";
@@ -8,6 +8,8 @@ import { renderSystemSelection, renderSystemPin, renderSystemLinks, renderSystem
 import { renderGalaxy } from "../game-functions/galaxy";
 import { SpriteList } from "../game-functions/sprites";
 import { RenderingProp } from "@andreadev/canvas-lib/dist/main";
+import { loadTemplate, setState } from "../utils";
+import { galaxyViewOptions, systemDetails } from "./templates/galaxyTemplates";
 
 
 export class GalaxyView extends EventTarget implements View {
@@ -28,15 +30,23 @@ export class GalaxyView extends EventTarget implements View {
 
         this.esData = esData;
         this.canvasLib.canvas.addEventListener('pointerdown', this.onCanvasClick.bind(this));
+
+        this.createAndBindUI();
     }
 
-    async activate(lib: CanvasLib) {
+    createAndBindUI() {
+        loadTemplate(galaxyViewOptions, '.left-bar .middle');
+        loadTemplate(systemDetails, '.right-bar .middle');
+
         document.getElementById('toggle-galaxies')?.addEventListener('change', this.toggleGalaxies.bind(this))
         document.getElementById('toggle-pins')?.addEventListener('change', this.toggleDots.bind(this))
         document.getElementById('toggle-names')?.addEventListener('change', this.toggleNames.bind(this))
         document.getElementById('toggle-links')?.addEventListener('change', this.toggleLinks.bind(this))
         document.getElementById('toggle-wormholes')?.addEventListener('change', this.toggleWormholes.bind(this))
         document.getElementById('toggle-hidden-wormholes')?.addEventListener('change', this.toggleHiddenWormholes.bind(this))
+    }
+
+    async activate(lib: CanvasLib) {
 
         this.buildSystemLinksCache();
 
@@ -59,11 +69,6 @@ export class GalaxyView extends EventTarget implements View {
     }
 
     async deactivate(lib: CanvasLib) {
-        // Removing event listeners will not work because of "bind"
-        // document.getElementById('toggle-galaxies')?.removeEventListener('change', this.toggleGalaxies)
-        // document.getElementById('toggle-pins')?.addEventListener('change', this.toggleDots)
-        // document.getElementById('toggle-names')?.addEventListener('change', this.toggleNames)
-        // document.getElementById('toggle-links')?.addEventListener('change', this.toggleLinks)
         lib.removeLayer('galaxies');
         lib.removeLayer('links');
         lib.removeLayer('wormhole-links');
@@ -146,8 +151,9 @@ export class GalaxyView extends EventTarget implements View {
         this.currentlySelected = system;
         this.updateStarSystemInfo(system);
 
-        let systemList = <HTMLSelectElement> document.getElementById('system-selection');
-        systemList.value = system.name;
+        setState({
+            selectedSystem: system.name,
+        });
         
         this.canvasLib.paint();
     }

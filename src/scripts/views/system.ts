@@ -4,6 +4,8 @@ import { SpriteList } from "../game-functions/sprites";
 import { CanvasLib } from "@andreadev/canvas-lib";
 import { RenderingProp } from "@andreadev/canvas-lib/dist/main";
 import { renderObject, renderObjectOrbit } from "../game-functions/object";
+import { getState, loadTemplate } from "../utils";
+import { systemViewOptions, systemsList } from "./templates/systemTemplates";
 
 export class SystemView extends EventTarget implements View {
     system: System | null = null;
@@ -15,6 +17,31 @@ export class SystemView extends EventTarget implements View {
 
         this.esData = esData;
         this.canvasLib = canvasLib;
+
+        this.createAndBindUI(esData, canvasLib);
+    }
+
+    createAndBindUI(esData: ParsedData, lib: CanvasLib) {
+        loadTemplate(systemViewOptions, '.left-bar .middle');
+        loadTemplate(systemsList, '.top-bar .middle');
+
+        document.getElementById('toggle-orbits')?.addEventListener('change', this.toggleOrbits.bind(this));
+        document.getElementById('toggle-objects')?.addEventListener('change', this.toggleObjects.bind(this));
+
+        // Add all systems to the list
+        let systemSelect = document.getElementById('system-selection')!;
+        for (let systemName of esData.starSystems.keys()) {
+            let opt = document.createElement('option');
+            opt.value = systemName;
+            opt.innerText = systemName;
+            systemSelect.appendChild(opt);
+        }
+
+        systemSelect.addEventListener('change', (e) => {
+            let systemName = (<HTMLSelectElement>e.target).selectedOptions[0]?.value;
+            this.setSystem(systemName);
+            lib.paint();
+        });
     }
 
     async setSystem(systemName: string) {
@@ -28,19 +55,14 @@ export class SystemView extends EventTarget implements View {
     }
 
     async activate(lib: CanvasLib) {
-        document.getElementById('toggle-orbits')?.addEventListener('change', this.toggleOrbits.bind(this));
-        document.getElementById('toggle-objects')?.addEventListener('change', this.toggleObjects.bind(this));
-
         let systemList = <HTMLSelectElement> document.getElementById('system-selection');
-        systemList.addEventListener('change', (e) => {
-            let systemName = (<HTMLSelectElement>e.target).selectedOptions[0]?.value;
-            this.setSystem(systemName);
-            lib.paint();
-        });
 
-        if (systemList.value != '-') {
-            this.setSystem(systemList.value);
+        let state = getState();
+        if (state?.selectedSystem) {
+            this.setSystem(state.selectedSystem);
+            systemList.value = state.selectedSystem;
         }
+
 
         await this.preloadObjectsSprites();
 

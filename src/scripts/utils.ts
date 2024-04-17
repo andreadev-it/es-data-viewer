@@ -17,7 +17,7 @@ export const openDirectory = async (): Promise<File[]> => {
     });
 };
 
-// Probabilmente è qualcosa che andrebbe piuttosto impostato nella libreria CanvasLib.
+// This should probably used in the library
 export const throttle = (fn: Function, wait: number = 300) => {
     let inThrottle: boolean;
     let lastFn: ReturnType<typeof setTimeout>;
@@ -54,4 +54,33 @@ export function loadImage(file: File): Promise<HTMLImageElement> {
         }
         img.src = URL.createObjectURL(file);
     });
+}
+
+/*
+ * Load an html template built with text and insert it into an
+ * element by its query selector
+ */
+export function loadTemplate(template: string, parentSelector: string) {
+    let parent = document.querySelector(parentSelector);
+    if (!parent) {
+        throw new Error(`Cannot load template because parent element doesn't exists ("${parentSelector}")`);
+    }
+
+    let templateEl = document.createElement('template');
+    templateEl.innerHTML = template;
+    let node = templateEl.content.firstChild?.cloneNode(true)!;
+
+    parent.appendChild(node);
+}
+
+export interface AppState {
+    selectedSystem: string | null,
+}
+
+export function setState(state: AppState) {
+    history.pushState(state, '');
+}
+
+export function getState(): AppState | null {
+    return history.state;
 }

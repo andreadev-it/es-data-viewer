@@ -645,6 +645,9 @@ class ParsedData {
         this.governments = new Map();
         this.planets = new Map();
         this.wormholes = new Map();
+        this.phrases = new Map();
+        this.starAttributes = new Map();
+        this.minables = new Map();
     }
     addGalaxy(galaxy) {
         this.galaxies.set(galaxy.name, galaxy);
@@ -663,6 +666,18 @@ class ParsedData {
     }
     addWormhole(wormhole) {
         this.wormholes.set(wormhole.name, wormhole);
+    }
+    addPhrase(phrase) {
+        if (this.phrases.has(phrase.name)) this.phrases.get(phrase.name).push(phrase);
+        else this.phrases.set(phrase.name, [
+            phrase
+        ]);
+    }
+    addStarAttribute(star) {
+        this.starAttributes.set(star.name, star);
+    }
+    addMinable(minable) {
+        this.minables.set(minable.name, minable);
     }
 }
 
@@ -831,20 +846,47 @@ var _color = require("./es-objects/Color");
 var _government = require("./es-objects/Government");
 var _planet = require("./es-objects/Planet");
 var _wormhole = require("./es-objects/Wormhole");
+var _phrase = require("./es-objects/Phrase");
+var _star = require("./es-objects/Star");
+var _minable = require("./es-objects/Minable");
 function parse(root, previousData = null) {
     const parsedData = previousData !== null && previousData !== void 0 ? previousData : new (0, _parsedData.ParsedData)();
-    for (let child of root.children){
-        if (child.tokens[0] == "system") parsedData.addStarSystem((0, _system.System).fromLine(parsedData, child));
-        else if (child.tokens[0] == "galaxy") parsedData.addGalaxy((0, _galaxy.Galaxy).fromLine(parsedData, child));
-        else if (child.tokens[0] == "color") parsedData.addColor((0, _color.Color).fromLine(parsedData, child));
-        else if (child.tokens[0] == "government") parsedData.addGovernment((0, _government.Government).fromLine(parsedData, child));
-        else if (child.tokens[0] == "planet") parsedData.addPlanet((0, _planet.Planet).fromLine(parsedData, child));
-        else if (child.tokens[0] == "wormhole") parsedData.addWormhole((0, _wormhole.Wormhole).fromLine(parsedData, child));
+    const unparsed = new Set();
+    for (let child of root.children)switch(child.tokens[0]){
+        case "system":
+            parsedData.addStarSystem((0, _system.System).fromLine(parsedData, child));
+            break;
+        case "galaxy":
+            parsedData.addGalaxy((0, _galaxy.Galaxy).fromLine(parsedData, child));
+            break;
+        case "color":
+            parsedData.addColor((0, _color.Color).fromLine(parsedData, child));
+            break;
+        case "government":
+            parsedData.addGovernment((0, _government.Government).fromLine(parsedData, child));
+            break;
+        case "planet":
+            parsedData.addPlanet((0, _planet.Planet).fromLine(parsedData, child));
+            break;
+        case "wormhole":
+            parsedData.addWormhole((0, _wormhole.Wormhole).fromLine(parsedData, child));
+            break;
+        case "phrase":
+            parsedData.addPhrase((0, _phrase.Phrase).fromLine(parsedData, child));
+            break;
+        case "star":
+            parsedData.addStarAttribute((0, _star.Star).fromLine(parsedData, child));
+            break;
+        case "minable":
+            parsedData.addMinable((0, _minable.Minable).fromLine(parsedData, child));
+            break;
+        default:
+            unparsed.add(child.tokens[0]);
     }
     return parsedData;
 }
 
-},{"./es-objects/ParsedData":"hhyWd","./es-objects/System":"7BGYc","./es-objects/Galaxy":"63rg6","./es-objects/Color":"fevHR","./es-objects/Government":"302R5","./es-objects/Planet":"kxKap","./es-objects/Wormhole":"59jmQ","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"7BGYc":[function(require,module,exports) {
+},{"./es-objects/ParsedData":"hhyWd","./es-objects/System":"7BGYc","./es-objects/Galaxy":"63rg6","./es-objects/Color":"fevHR","./es-objects/Government":"302R5","./es-objects/Planet":"kxKap","./es-objects/Wormhole":"59jmQ","./es-objects/Phrase":"b7MbR","./es-objects/Star":"7Yfdb","./es-objects/Minable":"4NlNT","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"7BGYc":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "System", ()=>System);
@@ -1353,7 +1395,200 @@ class Wormhole {
     }
 }
 
-},{"./Color":"fevHR","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"fwZzy":[function(require,module,exports) {
+},{"./Color":"fevHR","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"b7MbR":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "Phrase", ()=>Phrase);
+var _word = require("./Word");
+class Phrase {
+    constructor(){
+        this.name = "";
+        this.pieces = [];
+        this.replacements = [];
+    }
+    static fromLine(data, dataLine) {
+        var _a;
+        if (dataLine.tokens[0] != "phrase") throw new Error("Not a phrase");
+        let phrase = new Phrase();
+        phrase.name = (_a = dataLine.tokens[1]) !== null && _a !== void 0 ? _a : "";
+        let pieces = [];
+        let replacements = [];
+        for (let child of dataLine.children)switch(child.tokens[0]){
+            case "word":
+                pieces.push((0, _word.Word).fromLine(data, child));
+                break;
+            case "phrase":
+                pieces.push(this.phrasesNamesFromLine(child));
+                break;
+            case "replacements":
+                replacements = this.replacementsFromLine(child);
+                break;
+        }
+        phrase.pieces = pieces;
+        phrase.replacements = replacements;
+        return phrase;
+    }
+    static phrasesNamesFromLine(dataLine) {
+        let names;
+        names = dataLine.children.map((line)=>{
+            var _a;
+            return {
+                data: line.tokens[0],
+                weight: parseInt((_a = line.tokens[1]) !== null && _a !== void 0 ? _a : 1)
+            };
+        });
+        return names;
+    }
+    static replacementsFromLine(dataLine) {
+        let replacements;
+        replacements = dataLine.children.map((line)=>{
+            let from = line.tokens[0];
+            let to = line.tokens[1];
+            return [
+                from,
+                to
+            ];
+        });
+        return replacements;
+    }
+}
+
+},{"./Word":"kb52w","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"kb52w":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "Word", ()=>Word);
+class Word {
+    constructor(){
+        this.texts = [];
+    }
+    static fromLine(data, dataLine) {
+        var _a;
+        if (dataLine.tokens[0] != "word") throw new Error("Not a word");
+        let texts = [];
+        for (let child of dataLine.children)texts.push({
+            data: child.tokens[0],
+            weight: parseInt((_a = child.tokens[1]) !== null && _a !== void 0 ? _a : 1)
+        });
+        let wordObj = new Word();
+        wordObj.texts = texts;
+        return wordObj;
+    }
+}
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"7Yfdb":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "Star", ()=>Star);
+class Star {
+    constructor(){
+        this.name = "";
+        this.power = 1;
+        this.wind = 1;
+    }
+    static fromLine(data, dataLine) {
+        if (dataLine.tokens[0] != "star") throw new Error("Not a star");
+        let star = new Star();
+        star.name = dataLine.tokens[1];
+        for (let child of dataLine.children)switch(child.tokens[0]){
+            case "power":
+                star.power = parseFloat(child.tokens[1]);
+                break;
+            case "wind":
+                star.wind = parseFloat(child.tokens[1]);
+                break;
+        }
+        return star;
+    }
+}
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"4NlNT":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "Minable", ()=>Minable);
+var _minablePayload = require("./MinablePayload");
+class Minable {
+    constructor(){
+        this.name = "";
+        this.displayName = "";
+        this.noun = "Asteroid";
+        this.sprite = "";
+        this.hull = 0;
+        this.randomHull = 0;
+        this.payloads = [];
+        this.explosions = [];
+    }
+    static fromLine(data, dataLine) {
+        var _a;
+        if (dataLine.tokens[0] != "minable") throw new Error("Not a minable");
+        let minable = new Minable();
+        minable.name = dataLine.tokens[1];
+        minable.displayName = minable.name;
+        let payloads = [];
+        let explosions = [];
+        for (let child of dataLine.children)switch(child.tokens[0]){
+            case "display name":
+                minable.displayName = child.tokens[1];
+                break;
+            case "noun":
+                minable.noun = child.tokens[1];
+                break;
+            case "sprite":
+                minable.sprite = child.tokens[1];
+                break;
+            case "hull":
+                minable.hull = parseInt(child.tokens[1]);
+                break;
+            case "random hull":
+                minable.randomHull = parseInt(child.tokens[1]);
+                break;
+            case "payload":
+                payloads.push((0, _minablePayload.MinablePayload).fromLine(data, child));
+                break;
+            case "explode":
+                explosions.push({
+                    effect: child.tokens[1],
+                    count: parseInt((_a = child.tokens[2]) !== null && _a !== void 0 ? _a : 1)
+                });
+                break;
+        }
+        minable.payloads = payloads;
+        minable.explosions = explosions;
+        return minable;
+    }
+}
+
+},{"./MinablePayload":"79jzv","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"79jzv":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "MinablePayload", ()=>MinablePayload);
+class MinablePayload {
+    constructor(){
+        this.outfit = "";
+        this.maxDrops = 1;
+        this.dropRate = 0.25;
+        this.toughness = 1;
+    }
+    static fromLine(data, dataLine) {
+        if (dataLine.tokens[0] != "payload") throw new Error("Not a payload");
+        let payload = new MinablePayload();
+        payload.outfit = dataLine.tokens[1];
+        if (dataLine.tokens[2]) payload.maxDrops = parseInt(dataLine.tokens[2]);
+        for (let child of dataLine.children)switch(child.tokens[0]){
+            case "max drops":
+                payload.maxDrops = parseInt(child.tokens[1]);
+                break;
+            case "drop rate":
+                payload.dropRate = parseFloat(child.tokens[1]);
+                break;
+            case "toughness":
+                payload.toughness = parseInt(child.tokens[1]);
+                break;
+        }
+        return payload;
+    }
+}
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"fwZzy":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "readFile", ()=>readFile);
@@ -1720,6 +1955,8 @@ parcelHelpers.export(exports, "GalaxyView", ()=>GalaxyView);
 var _panZoomPlugin = require("@andreadev/canvas-lib/dist/modules/pan-zoom-plugin");
 var _system = require("../game-functions/system");
 var _galaxy = require("../game-functions/galaxy");
+var _utils = require("../utils");
+var _galaxyTemplates = require("./templates/galaxyTemplates");
 class GalaxyView extends EventTarget {
     constructor(esData, spriteList, canvasLib){
         super();
@@ -1741,14 +1978,19 @@ class GalaxyView extends EventTarget {
         };
         this.esData = esData;
         this.canvasLib.canvas.addEventListener("pointerdown", this.onCanvasClick.bind(this));
+        this.createAndBindUI();
     }
-    async activate(lib) {
+    createAndBindUI() {
+        (0, _utils.loadTemplate)((0, _galaxyTemplates.galaxyViewOptions), ".left-bar .middle");
+        (0, _utils.loadTemplate)((0, _galaxyTemplates.systemDetails), ".right-bar .middle");
         document.getElementById("toggle-galaxies")?.addEventListener("change", this.toggleGalaxies.bind(this));
         document.getElementById("toggle-pins")?.addEventListener("change", this.toggleDots.bind(this));
         document.getElementById("toggle-names")?.addEventListener("change", this.toggleNames.bind(this));
         document.getElementById("toggle-links")?.addEventListener("change", this.toggleLinks.bind(this));
         document.getElementById("toggle-wormholes")?.addEventListener("change", this.toggleWormholes.bind(this));
         document.getElementById("toggle-hidden-wormholes")?.addEventListener("change", this.toggleHiddenWormholes.bind(this));
+    }
+    async activate(lib) {
         this.buildSystemLinksCache();
         await this.preloadGalaxySprites();
         lib.addLayer("galaxies", 0);
@@ -1765,11 +2007,6 @@ class GalaxyView extends EventTarget {
         panZoomPlug.cameraOffset = this.savedPosition;
     }
     async deactivate(lib) {
-        // Removing event listeners will not work because of "bind"
-        // document.getElementById('toggle-galaxies')?.removeEventListener('change', this.toggleGalaxies)
-        // document.getElementById('toggle-pins')?.addEventListener('change', this.toggleDots)
-        // document.getElementById('toggle-names')?.addEventListener('change', this.toggleNames)
-        // document.getElementById('toggle-links')?.addEventListener('change', this.toggleLinks)
         lib.removeLayer("galaxies");
         lib.removeLayer("links");
         lib.removeLayer("wormhole-links");
@@ -1835,8 +2072,9 @@ class GalaxyView extends EventTarget {
     selectSystem(system) {
         this.currentlySelected = system;
         this.updateStarSystemInfo(system);
-        let systemList = document.getElementById("system-selection");
-        systemList.value = system.name;
+        (0, _utils.setState)({
+            selectedSystem: system.name
+        });
         this.canvasLib.paint();
     }
     updateStarSystemInfo(system) {
@@ -1912,7 +2150,7 @@ class GalaxyView extends EventTarget {
     }
 }
 
-},{"@andreadev/canvas-lib/dist/modules/pan-zoom-plugin":"5BQTv","../game-functions/system":"Cql21","../game-functions/galaxy":"5yTkr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"Cql21":[function(require,module,exports) {
+},{"@andreadev/canvas-lib/dist/modules/pan-zoom-plugin":"5BQTv","../game-functions/system":"Cql21","../game-functions/galaxy":"5yTkr","../utils":"isRWn","./templates/galaxyTemplates":"7W99Q","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"Cql21":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 /**
@@ -2012,11 +2250,142 @@ async function renderGalaxy(galaxy, spriteList, ctx) {
     ctx.drawImage(spriteImage, galaxy.position.x - spriteImage.width / 2, galaxy.position.y - spriteImage.height / 2);
 }
 
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"isRWn":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "openDirectory", ()=>openDirectory);
+parcelHelpers.export(exports, "throttle", ()=>throttle);
+// Load image
+parcelHelpers.export(exports, "loadImage", ()=>loadImage);
+/*
+ * Load an html template built with text and insert it into an
+ * element by its query selector
+ */ parcelHelpers.export(exports, "loadTemplate", ()=>loadTemplate);
+parcelHelpers.export(exports, "setState", ()=>setState);
+parcelHelpers.export(exports, "getState", ()=>getState);
+const openDirectory = async ()=>{
+    // Use older apis because File System Access API seems to be working unnaturally
+    return new Promise((resolve)=>{
+        const input = document.createElement("input");
+        input.type = "file";
+        input.webkitdirectory = true;
+        input.addEventListener("change", ()=>{
+            let files = Array.from(input.files);
+            resolve(files);
+        });
+        if ("showPicker" in HTMLInputElement.prototype) input.showPicker();
+        else input.click();
+    });
+};
+const throttle = (fn, wait = 300)=>{
+    let inThrottle;
+    let lastFn;
+    let lastTime;
+    return function() {
+        const context = this, args = arguments;
+        if (!inThrottle) {
+            fn.apply(context, args);
+            lastTime = Date.now();
+            inThrottle = true;
+        } else {
+            clearTimeout(lastFn);
+            lastFn = setTimeout(()=>{
+                if (Date.now() - lastTime >= wait) {
+                    fn.apply(context, args);
+                    lastTime = Date.now();
+                }
+            }, Math.max(wait - (Date.now() - lastTime), 0));
+        }
+    };
+};
+function loadImage(file) {
+    return new Promise((resolve, reject)=>{
+        let img = new Image();
+        img.onload = ()=>{
+            resolve(img);
+        };
+        img.onerror = ()=>{
+            reject();
+        };
+        img.src = URL.createObjectURL(file);
+    });
+}
+function loadTemplate(template, parentSelector) {
+    let parent = document.querySelector(parentSelector);
+    if (!parent) throw new Error(`Cannot load template because parent element doesn't exists ("${parentSelector}")`);
+    let templateEl = document.createElement("template");
+    templateEl.innerHTML = template;
+    let node = templateEl.content.firstChild?.cloneNode(true);
+    parent.appendChild(node);
+}
+function setState(state) {
+    history.pushState(state, "");
+}
+function getState() {
+    return history.state;
+}
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"7W99Q":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "galaxyViewOptions", ()=>galaxyViewOptions);
+parcelHelpers.export(exports, "systemDetails", ()=>systemDetails);
+const galaxyViewOptions = `<div class="container view-galaxy">
+    <div class="title">
+        Galaxy View
+    </div>
+    <div class="body vertical-stack">
+        <div class="field">
+            <label>
+                <input id="toggle-galaxies" type="checkbox" checked> Galaxies
+            </label>
+        </div>
+        <div class="field">
+            <label>
+                <input id="toggle-pins" type="checkbox" checked> System pins
+            </label>
+        </div>
+        <div class="field">
+            <label>
+                <input id="toggle-names" type="checkbox" checked> System names
+            </label>
+        </div>
+        <div class="field">
+            <label>
+                <input id="toggle-links" type="checkbox" checked> System links
+            </label>
+        </div>
+        <div class="field">
+            <label>
+                <input id="toggle-wormholes" type="checkbox" checked> System wormholes
+            </label>
+        </div>
+        <div class="field">
+            <label>
+                <input id="toggle-hidden-wormholes" type="checkbox"> Show hidden wormholes
+            </label>
+        </div>
+    </div>
+</div>`;
+const systemDetails = `<div class="container view-galaxy">
+    <div class="title">
+        Star system info
+    </div>
+    <div class="body vertical-stack">
+        <div id="system-name" class="field">Name: <span class="value"></span></div>
+        <div id="system-position" class="field">Position (x, y): <span class="value"></span></div>
+        <div id="system-government" class="field">Government: <span class="value"></span></div>
+        <div id="system-attributes" class="field">Attributes: <span class="value"></span></div>
+    </div>
+</div>`;
+
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"9LiF6":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "SystemView", ()=>SystemView);
 var _object = require("../game-functions/object");
+var _utils = require("../utils");
+var _systemTemplates = require("./templates/systemTemplates");
 class SystemView extends EventTarget {
     constructor(esData, spriteList, canvasLib){
         super();
@@ -2028,6 +2397,26 @@ class SystemView extends EventTarget {
         this.shouldRenderObjects = true;
         this.esData = esData;
         this.canvasLib = canvasLib;
+        this.createAndBindUI(esData, canvasLib);
+    }
+    createAndBindUI(esData, lib) {
+        (0, _utils.loadTemplate)((0, _systemTemplates.systemViewOptions), ".left-bar .middle");
+        (0, _utils.loadTemplate)((0, _systemTemplates.systemsList), ".top-bar .middle");
+        document.getElementById("toggle-orbits")?.addEventListener("change", this.toggleOrbits.bind(this));
+        document.getElementById("toggle-objects")?.addEventListener("change", this.toggleObjects.bind(this));
+        // Add all systems to the list
+        let systemSelect = document.getElementById("system-selection");
+        for (let systemName of esData.starSystems.keys()){
+            let opt = document.createElement("option");
+            opt.value = systemName;
+            opt.innerText = systemName;
+            systemSelect.appendChild(opt);
+        }
+        systemSelect.addEventListener("change", (e)=>{
+            let systemName = e.target.selectedOptions[0]?.value;
+            this.setSystem(systemName);
+            lib.paint();
+        });
     }
     async setSystem(systemName) {
         if (!this.esData.starSystems.has(systemName)) throw new Error("System name not found");
@@ -2035,15 +2424,12 @@ class SystemView extends EventTarget {
         await this.preloadObjectsSprites();
     }
     async activate(lib) {
-        document.getElementById("toggle-orbits")?.addEventListener("change", this.toggleOrbits.bind(this));
-        document.getElementById("toggle-objects")?.addEventListener("change", this.toggleObjects.bind(this));
         let systemList = document.getElementById("system-selection");
-        systemList.addEventListener("change", (e)=>{
-            let systemName = e.target.selectedOptions[0]?.value;
-            this.setSystem(systemName);
-            lib.paint();
-        });
-        if (systemList.value != "-") this.setSystem(systemList.value);
+        let state = (0, _utils.getState)();
+        if (state?.selectedSystem) {
+            this.setSystem(state.selectedSystem);
+            systemList.value = state.selectedSystem;
+        }
         await this.preloadObjectsSprites();
         lib.addLayer("background", 0);
         lib.addLayer("boundaries", 1);
@@ -2088,7 +2474,7 @@ class SystemView extends EventTarget {
     }
 }
 
-},{"../game-functions/object":"g6grH","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"g6grH":[function(require,module,exports) {
+},{"../game-functions/object":"g6grH","../utils":"isRWn","./templates/systemTemplates":"jnQIZ","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"g6grH":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "renderObjectOrbit", ()=>renderObjectOrbit);
@@ -2161,60 +2547,35 @@ function printSprite(filename, image, scale, ctx) {
     ctx.globalCompositeOperation = "source-over";
 }
 
-},{"../utils":"isRWn","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"isRWn":[function(require,module,exports) {
+},{"../utils":"isRWn","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"jnQIZ":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "openDirectory", ()=>openDirectory);
-parcelHelpers.export(exports, "throttle", ()=>throttle);
-// Load image
-parcelHelpers.export(exports, "loadImage", ()=>loadImage);
-const openDirectory = async ()=>{
-    // Use older apis because File System Access API seems to be working unnaturally
-    return new Promise((resolve)=>{
-        const input = document.createElement("input");
-        input.type = "file";
-        input.webkitdirectory = true;
-        input.addEventListener("change", ()=>{
-            let files = Array.from(input.files);
-            resolve(files);
-        });
-        if ("showPicker" in HTMLInputElement.prototype) input.showPicker();
-        else input.click();
-    });
-};
-const throttle = (fn, wait = 300)=>{
-    let inThrottle;
-    let lastFn;
-    let lastTime;
-    return function() {
-        const context = this, args = arguments;
-        if (!inThrottle) {
-            fn.apply(context, args);
-            lastTime = Date.now();
-            inThrottle = true;
-        } else {
-            clearTimeout(lastFn);
-            lastFn = setTimeout(()=>{
-                if (Date.now() - lastTime >= wait) {
-                    fn.apply(context, args);
-                    lastTime = Date.now();
-                }
-            }, Math.max(wait - (Date.now() - lastTime), 0));
-        }
-    };
-};
-function loadImage(file) {
-    return new Promise((resolve, reject)=>{
-        let img = new Image();
-        img.onload = ()=>{
-            resolve(img);
-        };
-        img.onerror = ()=>{
-            reject();
-        };
-        img.src = URL.createObjectURL(file);
-    });
-}
+parcelHelpers.export(exports, "systemViewOptions", ()=>systemViewOptions);
+parcelHelpers.export(exports, "systemsList", ()=>systemsList);
+const systemViewOptions = `<div class="container view-system">
+    <div class="title">
+        System View
+    </div>
+    <div class="body vertical-stack">
+        <div class="field">
+            <label>
+                <input id="toggle-orbits" type="checkbox" checked> Orbits
+            </label>
+        </div>
+        <div class="field">
+            <label>
+                <input id="toggle-objects" type="checkbox" checked> Planets / Stars
+            </label>
+        </div>
+    </div>
+</div>`;
+const systemsList = `<div class="container view-system">
+    <div class="body">
+        <label>System: 
+            <select id="system-selection"><option value="-">---</option></select>
+        </label>
+    </div>
+</div>`;
 
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"ec5tO":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
@@ -2234,13 +2595,6 @@ function bindUI(lib, data) {
         if (!panZoomPlugin) return;
         panZoomPlugin.zoom(-0.2);
     });
-    let systemSelect = document.getElementById("system-selection");
-    for (let systemName of data.starSystems.keys()){
-        let opt = document.createElement("option");
-        opt.value = systemName;
-        opt.innerText = systemName;
-        systemSelect.appendChild(opt);
-    }
     document.getElementById("galaxy-tab")?.addEventListener("click", ()=>{
         (0, _setupCanvasLib.setCurrentView)(lib, "galaxy");
     });
