@@ -52,10 +52,8 @@ export async function setCurrentView(lib: CanvasLib, viewName: string) {
 }
 
 export async function filesLoaded(lib: CanvasLib, sprites: SpriteList, data: ParsedData) {
-    let systemView = new SystemView(data, sprites, lib); 
-
-    views.system = systemView;
-    views.galaxy = new GalaxyView(data, sprites, lib);
+    views.system = views.system ?? new SystemView(data, sprites, lib);
+    views.galaxy = views.galaxy ?? new GalaxyView(data, sprites, lib);
 
     await setCurrentView(lib, 'galaxy');
 
