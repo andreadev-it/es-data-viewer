@@ -5,10 +5,12 @@ import { GalaxyView } from "./views/galaxy";
 import { SystemView } from "./views/system";
 import { ParsedData } from "es-data-parser";
 import { SpriteList } from "./game-functions/sprites";
+import { MissionsView } from "./views/missions";
 
 const views: Record<string, View | null>= {
     galaxy: null,
     system: null,
+    missions: null,
 };
 let currentView: View | null = null;
 
@@ -54,6 +56,7 @@ export async function setCurrentView(lib: CanvasLib, viewName: string) {
 export async function filesLoaded(lib: CanvasLib, sprites: SpriteList, data: ParsedData) {
     views.system = views.system ?? new SystemView(data, sprites, lib);
     views.galaxy = views.galaxy ?? new GalaxyView(data, sprites, lib);
+    views.missions = views.missions ?? new MissionsView(data, sprites, lib);
 
     await setCurrentView(lib, 'galaxy');
 

@@ -28,4 +28,8 @@ export function bindUI(lib: CanvasLib, data: ParsedData) {
     document.getElementById('system-tab')?.addEventListener('click', () => {
         setCurrentView(lib, 'system');
     });
+
+    document.getElementById('missions-tab')?.addEventListener('click', () => {
+        setCurrentView(lib, 'missions');
+    });
 }

@@ -7,7 +7,8 @@
 }
 
 .view-galaxy,
-.view-system {
+.view-system,
+.view-missions {
     display: none;
 }
 
@@ -16,6 +17,10 @@
 }
 
 .active-system .view-system {
+    display: revert;
+}
+
+.active-missions .view-missions {
     display: revert;
 }
 
@@ -73,4 +78,8 @@
 
 .btn:hover {
     background-color: var(--ui-bg-lighter);
+}
+
+.label-file-picker input[type="file"] {
+    display: none;
 }
